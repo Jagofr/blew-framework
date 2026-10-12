@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting... 🍃</title>
+  <script>
+    // GitHub Pages Single Page App Redirect
+    // Saves current full path (pathname + search + hash) to sessionStorage
+    // and redirects to repo root so BlewRouter can restore it cleanly
+    const fullPath = window.location.pathname + window.location.search + window.location.hash;
+    try {
+      sessionStorage.setItem('blew_redirect_path', fullPath);
+    } catch (e) {}
+
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const isGithubIo = window.location.hostname.endsWith('github.io');
+    const repoBase = (isGithubIo && pathSegments.length > 0) ? '/' + pathSegments[0] + '/' : '/';
+    window.location.replace(repoBase);
+  </script>
+</head>
+<body>
+  <p>Redirecting to application... 🍃</p>
+</body>
+</html>

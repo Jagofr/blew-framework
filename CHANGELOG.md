@@ -4,7 +4,34 @@ All notable changes to the Blew framework will be documented in this file.
 
 The versioning format adheres strictly to:
 `MAJOR.MINOR.PATCH BUILD-TYPE (BUILD 0000)`
-*(Canonical semantic identifier: `0.1.0-alpha.build-0001`)*
+*(Canonical semantic identifier: `0.1.0-alpha.build-0002`)*
+
+---
+
+## [0.1.0 ALPHA (BUILD 0002)] - 2026-10-12
+
+### 🛠️ GitHub Pages (`gh-pages`) & Subpath Deployment Compatibility
+
+#### Core Router & API Enhancements
+* **`@blew/router` (`BlewRouter`):**
+  * Added `_detectBase()` to automatically infer subpath prefixes from `<base href>` or `*.github.io` repository URLs.
+  * Added base-path stripping and prefixing in `match()` and `navigate()` for seamless subpath navigation.
+  * Added Shadow DOM-aware link click interception using `event.composedPath()`.
+  * Added automatic SPA deep-link restoration on load from `sessionStorage.getItem('blew_redirect_path')`.
+* **`@blew/api` (`BlewApiRouter`):**
+  * Normalized request pathnames to resolve `/api/*` endpoints identically whether hosted at domain root or under a repository subpath.
+
+#### Build Pipeline & PWA Packaging (`build.js`, `sw.js`, `manifest.webmanifest`)
+* **Relative Asset & Import Map Generation:**
+  * Updated `dist/index.html` to emit relative `./` paths for stylesheets, entry scripts, manifest, and import map specifiers (`./chunks/...`).
+  * Rewrote relative module imports across all bundled UI components, feature slices, routes, and core chunks to resolve directly to hashed chunk filenames.
+* **GitHub Pages Static Hosting Artifacts:**
+  * Emitted `dist/.nojekyll` to bypass Jekyll asset filtering on GitHub Pages.
+  * Emitted `dist/404.html` with SPA path capture and redirect back to the repository root.
+* **Service Worker & Manifest Subpath Support:**
+  * Updated `src/app.js` to register `./sw.js` with relative scope.
+  * Updated `build.js` to inject the exact production chunk list into `dist/sw.js` `PRECACHE_ASSETS`.
+  * Updated `manifest.webmanifest` `start_url` and `scope` to `"./"`.
 
 ---
 

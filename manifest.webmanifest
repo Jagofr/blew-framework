@@ -1,10 +1,10 @@
 {
   "name": "Blew Application",
   "short_name": "Blew",
-  "version": "0.1.0 ALPHA (BUILD 0001)",
+  "version": "0.1.0 ALPHA (BUILD 0002)",
   "description": "A breezy, standards-native, zero-build Progressive Web Application framework.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",

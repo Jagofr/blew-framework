@@ -1,19 +1,1 @@
-import { count, reset as resetStore } from './store.js';
-export async function GET(request, context) {
-return Response.json({ count: count.value });
-}
-export async function POST(request, context) {
-try {
-const data = await request.json();
-if (typeof data?.value === 'number') {
-count.value = data.value;
-}
-return Response.json({ success: true, count: count.value });
-} catch {
-return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
-}
-}
-export async function reset(request, context) {
-resetStore();
-return Response.json({ success: true, count: 0 });
-}
+import { count, reset as resetStore } from './store.js';export async function GET(request, context) {return Response.json({ count: count.value });}export async function POST(request, context) {try {const data = await request.json();if (typeof data?.value === 'number') {count.value = data.value;}return Response.json({ success: true, count: count.value });} catch {return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });}}export async function reset(request, context) {resetStore();return Response.json({ success: true, count: 0 });}
