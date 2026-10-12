@@ -1,8 +1,4 @@
 <!DOCTYPE html>
-<!--
-  Copyright (c) 2026 Blew Framework Authors
-  SPDX-License-Identifier: LicenseRef-ACPNCL-1.0
--->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -10,37 +6,28 @@
   <meta name="description" content="A breezy, standards-native, zero-build Progressive Web Application framework.">
   <meta name="theme-color" content="#0070f3">
   <title>Blew Application 🍃</title>
-
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.webmanifest">
-
-  <!-- Core Theme & Design Tokens -->
-  <link rel="stylesheet" href="/src/core/theme.css">
-
-  <!-- Native Browser Import Map -->
+  <link rel="stylesheet" href="/theme.962df09d.css">
   <script type="importmap">
   {
-    "imports": {
-      "@blew/core": "/src/core/element.js",
-      "@blew/router": "/src/core/router.js",
-      "@blew/api": "/src/core/api-router.js",
-      "@blew/signals": "/src/core/signals.js",
-      "@blew/router-utils": "/src/core/router-utils.js",
-      "@blew/env": "/src/core/env.js",
-      "@features/": "/src/features/",
-      "@ui/": "/src/components/"
-    }
+  "imports": {
+    "@blew/core": "/chunks/element.a31f4229.js",
+    "@blew/signals": "/chunks/signals.1f2e9026.js",
+    "@blew/router": "/chunks/router.8d4e8584.js",
+    "@blew/api": "/chunks/api-router.1058c896.js",
+    "@blew/router-utils": "/chunks/router-utils.5ed19cc0.js",
+    "@blew/env": "/chunks/env.10d436f7.js",
+    "@blew/global": "/chunks/global.3f5d2d6f.js",
+    "@ui/": "/chunks/ui/",
+    "@features/": "/chunks/features/"
   }
+}
   </script>
-
-  <!-- Application Bootstrap -->
-  <script type="module" src="/src/app.js"></script>
+  <script type="module" src="/app.bb428991.js"></script>
 </head>
 <body>
   <b-shell app-title="Blew App 🍃">
-    <!-- Router outlet where active views mount -->
     <main id="b-outlet"></main>
   </b-shell>
 </body>
 </html>
-

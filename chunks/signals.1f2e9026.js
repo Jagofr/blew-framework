@@ -1,0 +1,186 @@
+const trackingStack = [];
+let batchDepth = 0;
+const pendingBatchSubscribers = new Map();
+export class SignalInternal {
+constructor(initialValue) {
+this._value = initialValue;
+this._subscribers = new Set();
+}
+get value() {
+const active = trackingStack[trackingStack.length - 1];
+if (active) {
+this._subscribers.add(active.notify);
+active.dependencies.add(this);
+}
+return this._value;
+}
+subscribe(fn) {
+this._subscribers.add(fn);
+return () => {
+this._subscribers.delete(fn);
+};
+}
+unsubscribe(fn) {
+this._subscribers.delete(fn);
+}
+_notify() {
+const currentSubscribers = Array.from(this._subscribers);
+for (const sub of currentSubscribers) {
+if (batchDepth > 0) {
+pendingBatchSubscribers.set(sub, () => sub(this._value));
+} else {
+sub(this._value);
+}
+}
+}
+}
+export class Signal extends SignalInternal {
+constructor(initialValue) {
+super(initialValue);
+}
+set value(nextValue) {
+if (!Object.is(this._value, nextValue)) {
+this._value = nextValue;
+this._notify();
+}
+}
+get value() {
+return super.value;
+}
+update(updater) {
+const next = updater(this._value);
+this.value = next;
+return this._value;
+}
+}
+export class Computed extends SignalInternal {
+constructor(computeFn) {
+super( (undefined));
+this._computeFn = computeFn;
+this._dirty = true;
+this._dependencies = new Set();
+this._onDependencyChange = () => {
+if (!this._dirty) {
+this._dirty = true;
+const oldValue = this._value;
+this._recompute();
+if (!Object.is(oldValue, this._value)) {
+this._notify();
+}
+}
+};
+}
+subscribe(fn) {
+if (this._dirty) {
+this._recompute();
+}
+return super.subscribe(fn);
+}
+_recompute() {
+for (const dep of this._dependencies) {
+dep.unsubscribe(this._onDependencyChange);
+}
+this._dependencies.clear();
+const trackingContext = {
+notify: this._onDependencyChange,
+dependencies: this._dependencies
+};
+trackingStack.push(trackingContext);
+try {
+this._value = this._computeFn();
+this._dirty = false;
+} finally {
+trackingStack.pop();
+}
+for (const dep of this._dependencies) {
+dep.subscribe(this._onDependencyChange);
+}
+}
+get value() {
+if (this._dirty) {
+this._recompute();
+}
+return super.value;
+}
+}
+export function signal(initialValue) {
+return new Signal(initialValue);
+}
+export function computed(fn) {
+return new Computed(fn);
+}
+export function effect(fn) {
+let cleanup;
+let active = true;
+const dependencies = new Set();
+function run() {
+if (!active) return;
+if (typeof cleanup === 'function') {
+try {
+cleanup();
+} catch (err) {
+console.error('Error during effect cleanup:', err);
+}
+cleanup = undefined;
+}
+for (const dep of dependencies) {
+dep.unsubscribe(scheduledRun);
+}
+dependencies.clear();
+const trackingContext = {
+notify: scheduledRun,
+dependencies
+};
+trackingStack.push(trackingContext);
+try {
+const res = fn();
+if (typeof res === 'function') {
+cleanup = res;
+}
+} finally {
+trackingStack.pop();
+}
+for (const dep of dependencies) {
+dep.subscribe(scheduledRun);
+}
+}
+function scheduledRun() {
+if (!active) return;
+run();
+}
+run();
+return () => {
+if (!active) return;
+active = false;
+if (typeof cleanup === 'function') {
+try {
+cleanup();
+} catch (err) {
+console.error('Error during effect teardown:', err);
+}
+}
+for (const dep of dependencies) {
+dep.unsubscribe(scheduledRun);
+}
+dependencies.clear();
+};
+}
+export function batch(fn) {
+batchDepth++;
+try {
+fn();
+} finally {
+batchDepth--;
+if (batchDepth === 0) {
+const toFlush = Array.from(pendingBatchSubscribers.values());
+pendingBatchSubscribers.clear();
+for (const flush of toFlush) {
+try {
+flush();
+} catch (err) {
+console.error('Error during batch flush:', err);
+}
+}
+}
+}
+}

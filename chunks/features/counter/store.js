@@ -1,0 +1,12 @@
+import { signal, computed } from '../../core/signals.js';
+export const count = signal(0);
+export const doubleCount = computed(() => count.value * 2);
+export function increment() {
+return count.update((n) => n + 1);
+}
+export function decrement() {
+return count.update((n) => (n > 0 ? n - 1 : 0));
+}
+export function reset() {
+count.value = 0;
+}

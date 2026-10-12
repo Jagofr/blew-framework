@@ -1,0 +1,31 @@
+export function extractActiveRoutes(featureList = []) {
+const views = [];
+const apis = [];
+if (!Array.isArray(featureList)) {
+return { views, apis };
+}
+for (const feature of featureList) {
+if (!feature || typeof feature !== 'object') {
+continue;
+}
+if (Boolean(feature.disabled)) {
+continue;
+}
+if (feature.view && typeof feature.view === 'object') {
+views.push({
+feature: feature.name,
+pattern: feature.view.pattern,
+tag: feature.view.tag,
+load: feature.view.load
+});
+}
+if (feature.api && typeof feature.api === 'object') {
+apis.push({
+feature: feature.name,
+pattern: feature.api.pattern,
+load: feature.api.load
+});
+}
+}
+return { views, apis };
+}

@@ -1,0 +1,151 @@
+class StyleSheetCacheManager {
+constructor() {
+this._cache = new Map();
+}
+getOrCreate(cssText) {
+if (typeof CSSStyleSheet === 'undefined') {
+return null;
+}
+if (this._cache.has(cssText)) {
+return  (this._cache.get(cssText));
+}
+try {
+const sheet = new CSSStyleSheet();
+sheet.replaceSync(cssText);
+this._cache.set(cssText, sheet);
+return sheet;
+} catch {
+return null;
+}
+}
+clear() {
+this._cache.clear();
+}
+}
+export const StyleSheetCache = new StyleSheetCacheManager();
+let globalThemeSheet = null;
+export function getOrCreateThemeSheet(sheetOrCss) {
+if (sheetOrCss) {
+if (sheetOrCss instanceof CSSStyleSheet) {
+globalThemeSheet = sheetOrCss;
+} else if (typeof sheetOrCss === 'string') {
+globalThemeSheet = StyleSheetCache.getOrCreate(sheetOrCss);
+}
+}
+if (!globalThemeSheet && typeof CSSStyleSheet !== 'undefined') {
+const defaultTokens = `
+:host {
+color-scheme: light dark;
+}
+`;
+globalThemeSheet = StyleSheetCache.getOrCreate(defaultTokens);
+}
+return globalThemeSheet;
+}
+const templateCache = new Map();
+const BaseHTMLElement = typeof HTMLElement !== 'undefined'
+? HTMLElement
+:  (class MockHTMLElement {});
+export class BlewElement extends BaseHTMLElement {
+constructor(options = {}) {
+super();
+this.params = {};
+this._disposers = new Set();
+if (typeof this.attachShadow === 'function') {
+this.attachShadow({
+mode: options.mode ?? 'open',
+delegatesFocus: options.delegatesFocus ?? false
+});
+}
+}
+adoptStyles(...styles) {
+if (!this.shadowRoot || !('adoptedStyleSheets' in this.shadowRoot)) {
+return;
+}
+const flatStyles = styles.flat(Infinity);
+const resolvedSheets = [];
+const themeSheet = getOrCreateThemeSheet();
+if (themeSheet) {
+resolvedSheets.push(themeSheet);
+}
+for (const item of flatStyles) {
+if (typeof CSSStyleSheet !== 'undefined' && item instanceof CSSStyleSheet) {
+if (!resolvedSheets.includes(item)) {
+resolvedSheets.push(item);
+}
+} else if (typeof item === 'string') {
+const compiled = StyleSheetCache.getOrCreate(item);
+if (compiled && !resolvedSheets.includes(compiled)) {
+resolvedSheets.push(compiled);
+}
+}
+}
+this.shadowRoot.adoptedStyleSheets = resolvedSheets;
+}
+html(strings, ...values) {
+if (typeof document === 'undefined') {
+return  ({});
+}
+let markup = '';
+for (let i = 0; i < strings.length; i++) {
+markup += strings[i];
+if (i < values.length) {
+const val = values[i];
+if (val === null || val === undefined) {
+markup += '';
+} else if (Array.isArray(val)) {
+markup += val.join('');
+} else {
+markup += String(val);
+}
+}
+}
+const cacheKey = strings.join('__BLEW_PART__');
+let template = templateCache.get(cacheKey);
+if (!template) {
+template = document.createElement('template');
+template.innerHTML = markup;
+templateCache.set(cacheKey, template);
+} else {
+template.innerHTML = markup;
+}
+return template.content.cloneNode(true);
+}
+subscribe(disposer) {
+if (typeof disposer !== 'function') {
+return () => {};
+}
+this._disposers.add(disposer);
+return () => {
+this._disposers.delete(disposer);
+try {
+disposer();
+} catch (err) {
+console.error('Error during manual disposal in BlewElement:', err);
+}
+};
+}
+dispatch(eventName, detail = null, options = {}) {
+if (typeof CustomEvent === 'undefined' || typeof this.dispatchEvent !== 'function') {
+return true;
+}
+const event = new CustomEvent(eventName, {
+bubbles: options.bubbles ?? true,
+composed: options.composed ?? true,
+cancelable: options.cancelable ?? true,
+detail,
+...options
+});
+return this.dispatchEvent(event);
+}
+disconnectedCallback() {
+for (const disposer of this._disposers) {
+try {
+disposer();
+} catch (err) {
+console.error('Error executing disposer during BlewElement disconnect:', err);
+}
+}
+this._disposers.clear();
+}
+}

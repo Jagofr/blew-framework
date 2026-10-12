@@ -4,6 +4,9 @@ node_modules/
 # Production output
 dist/
 
+# Source Code
+.source
+
 # OS / Editor files
 .DS_Store
 Thumbs.db

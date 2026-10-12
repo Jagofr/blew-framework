@@ -1,0 +1,114 @@
+import { getOrCreateThemeSheet } from './element.js';
+let registeredRouter = null;
+class BadgeHelper {
+async set(count) {
+if (typeof navigator !== 'undefined' && 'setAppBadge' in navigator && typeof navigator.setAppBadge === 'function') {
+try {
+await navigator.setAppBadge(count);
+} catch (err) {
+console.warn('Failed to set application badge:', err);
+}
+}
+}
+async clear() {
+if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator && typeof navigator.clearAppBadge === 'function') {
+try {
+await navigator.clearAppBadge();
+} catch (err) {
+console.warn('Failed to clear application badge:', err);
+}
+}
+}
+}
+class DialogHelper {
+_resolve(target) {
+if (typeof document === 'undefined') return null;
+if (typeof target === 'string') {
+return document.querySelector(target);
+}
+if (typeof HTMLElement !== 'undefined' && target instanceof HTMLElement) {
+return target;
+}
+return null;
+}
+showModal(target) {
+const el = this._resolve(target);
+if (!el) return;
+if (typeof ( (el)).showModal === 'function') {
+( (el)).showModal();
+} else if (typeof el.showPopover === 'function') {
+el.showPopover();
+} else {
+el.setAttribute('open', '');
+}
+}
+close(target) {
+const el = this._resolve(target);
+if (!el) return;
+if (typeof ( (el)).close === 'function') {
+( (el)).close();
+} else if (typeof el.hidePopover === 'function') {
+el.hidePopover();
+} else {
+el.removeAttribute('open');
+}
+}
+}
+export class BlewRuntime {
+constructor() {
+this.badge = new BadgeHelper();
+this.dialog = new DialogHelper();
+}
+setRouter(router) {
+registeredRouter = router;
+}
+async navigate(url, options) {
+if (registeredRouter) {
+return registeredRouter.navigate(url, options);
+}
+if (typeof window !== 'undefined' && 'navigation' in window && window.navigation) {
+window.navigation.navigate(url, options);
+return;
+}
+if (typeof window !== 'undefined') {
+window.history.pushState(options?.state ?? null, '', url);
+window.dispatchEvent(new PopStateEvent('popstate', { state: options?.state }));
+}
+}
+back() {
+if (typeof window === 'undefined') return;
+if ('navigation' in window && window.navigation && typeof window.navigation.back === 'function') {
+window.navigation.back();
+} else {
+window.history.back();
+}
+}
+forward() {
+if (typeof window === 'undefined') return;
+if ('navigation' in window && window.navigation && typeof window.navigation.forward === 'function') {
+window.navigation.forward();
+} else {
+window.history.forward();
+}
+}
+async share(data) {
+if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
+try {
+await navigator.share(data);
+} catch (err) {
+if ( (err)?.name !== 'AbortError') {
+console.warn('Share failed:', err);
+}
+}
+} else {
+console.info('Web Share API is not supported in this runtime environment.', data);
+}
+}
+getThemeSheet() {
+return getOrCreateThemeSheet();
+}
+}
+export const Blew = new BlewRuntime();
+if (typeof globalThis !== 'undefined') {
+globalThis.Blew = Blew;
+}

@@ -1,0 +1,51 @@
+import { ENV } from './core/env.js';
+export const features = [
+{
+name: 'home',
+disabled: false,
+view: {
+pattern: '/',
+tag: 'b-home-view',
+load: () => import('./features/home/home-view.js')
+}
+},
+{
+name: 'counter',
+disabled: false,
+view: {
+pattern: '/counter/:action*',
+tag: 'b-counter-view',
+load: () => import('./features/counter/counter-view.js')
+},
+api: {
+pattern: '/api/counter/:action*',
+load: () => import('./features/counter/endpoint.js')
+}
+},
+{
+name: 'notes',
+disabled: false,
+view: {
+pattern: '/notes/:subview*',
+tag: 'b-notes-view',
+load: () => import('./features/notes/notes-view.js')
+},
+api: {
+pattern: '/api/notes/:action*',
+load: () => import('./features/notes/endpoint.js')
+}
+},
+{
+name: 'ai-summary',
+disabled: true,
+view: {
+pattern: '/ai/:action*',
+tag: 'b-ai-view',
+load: () => Promise.resolve({})
+},
+api: {
+pattern: '/api/ai/:action*',
+load: () => Promise.resolve({})
+}
+}
+];
