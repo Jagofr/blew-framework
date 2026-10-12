@@ -49,3 +49,4 @@ describe('Global Blew Runtime Helpers (`Blew.*`)', () => {
     assert.equal(typeof Blew.getThemeSheet, 'function');
   });
 });
+

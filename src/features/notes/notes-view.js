@@ -272,3 +272,4 @@ export class NotesView extends BlewElement {
 if (typeof customElements !== 'undefined' && !customElements.get('b-notes-view')) {
   customElements.define('b-notes-view', NotesView);
 }
+

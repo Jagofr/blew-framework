@@ -105,3 +105,4 @@ export function archiveNote(id) {
     current.map((n) => (n.id === id ? { ...n, archived: true } : n))
   );
 }
+

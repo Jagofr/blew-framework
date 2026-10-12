@@ -45,3 +45,4 @@ export function decrement() {
 export function reset() {
   count.value = 0;
 }
+

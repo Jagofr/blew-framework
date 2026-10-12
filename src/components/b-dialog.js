@@ -154,3 +154,4 @@ export class BlewDialog extends BlewElement {
 if (typeof customElements !== 'undefined' && !customElements.get('b-dialog')) {
   customElements.define('b-dialog', BlewDialog);
 }
+

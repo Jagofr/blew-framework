@@ -42,3 +42,4 @@ describe('E2E Integration: Progressive Web App Service Worker', () => {
     assert.equal(manifest.version, VERSION);
   });
 });
+

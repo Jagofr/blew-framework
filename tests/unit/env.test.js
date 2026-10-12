@@ -32,3 +32,4 @@ describe('Environment Detection Module (@blew/env)', () => {
     assert.equal(ENV.isProd(), false);
   });
 });
+

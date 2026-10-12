@@ -42,3 +42,4 @@ describe('E2E Integration: Headless Production Bundler (build.js)', () => {
     assert.equal(fs.existsSync(path.join(distDir, 'chunks', 'features', 'ai-summary')), false);
   });
 });
+

@@ -126,3 +126,4 @@ export class BlewShell extends BlewElement {
 if (typeof customElements !== 'undefined' && !customElements.get('b-shell')) {
   customElements.define('b-shell', BlewShell);
 }
+

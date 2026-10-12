@@ -156,3 +156,4 @@ export class CounterView extends BlewElement {
 if (typeof customElements !== 'undefined' && !customElements.get('b-counter-view')) {
   customElements.define('b-counter-view', CounterView);
 }
+

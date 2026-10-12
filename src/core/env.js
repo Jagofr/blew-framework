@@ -79,3 +79,4 @@ class EnvironmentDetector {
  * @type {EnvironmentDetector}
  */
 export const ENV = new EnvironmentDetector();
+

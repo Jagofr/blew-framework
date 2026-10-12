@@ -52,3 +52,4 @@ describe('E2E Integration: Client Navigation & Route Matching', () => {
     assert.equal(match, null);
   });
 });
+

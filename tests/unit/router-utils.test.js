@@ -60,3 +60,4 @@ describe('Route Manifest Normalization (@blew/router-utils)', () => {
     assert.deepEqual(extractActiveRoutes([null, undefined, {}]), { views: [], apis: [] });
   });
 });
+

@@ -94,3 +94,4 @@ export function extractActiveRoutes(featureList = []) {
 
   return { views, apis };
 }
+

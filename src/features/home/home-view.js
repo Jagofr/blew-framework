@@ -157,3 +157,4 @@ export class HomeView extends BlewElement {
 if (typeof customElements !== 'undefined' && !customElements.get('b-home-view')) {
   customElements.define('b-home-view', HomeView);
 }
+
