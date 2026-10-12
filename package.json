@@ -1,7 +1,7 @@
 {
   "name": "blew-framework",
-  "version": "0.1.0-alpha.build-0001",
-  "blewVersion": "0.1.0 ALPHA (BUILD 0001)",
+  "version": "0.1.0-alpha.build-0002",
+  "blewVersion": "0.1.0 ALPHA (BUILD 0002)",
   "description": "A breezy, standards-native, zero-build Progressive Web Application framework.",
   "type": "module",
   "main": "src/app.js",

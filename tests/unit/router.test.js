@@ -59,5 +59,25 @@ describe('Client Router Engine (@blew/router)', () => {
     const match = router.match('/unregistered/path');
     assert.equal(match, null);
   });
+
+  test('matches routes when configured with base subpath (GitHub Pages)', () => {
+    const subpathRouter = new BlewRouter(routes, null, {
+      base: '/blew-framework',
+      enableTransitions: false
+    });
+
+    const rootMatch = subpathRouter.match('/blew-framework/');
+    assert.ok(rootMatch);
+    assert.equal(rootMatch.route.tag, 'b-home-view');
+
+    const counterMatch = subpathRouter.match('/blew-framework/counter');
+    assert.ok(counterMatch);
+    assert.equal(counterMatch.route.tag, 'b-counter-view');
+
+    const notesMatch = subpathRouter.match('/blew-framework/notes/123');
+    assert.ok(notesMatch);
+    assert.equal(notesMatch.route.tag, 'b-notes-view');
+    assert.equal(notesMatch.params.subview, '123');
+  });
 });
 

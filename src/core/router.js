@@ -53,12 +53,19 @@ export class BlewRouter {
 
     /**
      * Configuration options.
-     * @type {RouterOptions}
+     * @type {RouterOptions & { base?: string }}
      */
     this.options = {
       enableTransitions: true,
       ...options
     };
+
+    /**
+     * Base hosting subpath (e.g., '/blew-framework' on GitHub Pages).
+     * @type {string}
+     */
+    const detectedBase = this._detectBase();
+    this.base = (options.base !== undefined ? options.base : detectedBase).replace(/\/$/, '');
 
     /**
      * Compiled URLPattern instances paired with their route definitions.
@@ -91,6 +98,34 @@ export class BlewRouter {
   }
 
   /**
+   * Automatically detects the base hosting path from `<base href>` or GitHub Pages URL structure.
+   * @private
+   * @returns {string} Detected base path (e.g., '/blew-framework' or '').
+   */
+  _detectBase() {
+    if (typeof document !== 'undefined') {
+      const baseTag = document.querySelector('base');
+      if (baseTag && baseTag.getAttribute('href')) {
+        try {
+          const href = baseTag.getAttribute('href') || '';
+          return new URL(href, window.location.origin).pathname.replace(/\/$/, '');
+        } catch {
+          // Ignore malformed base href
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined' && window.location?.hostname?.endsWith('github.io')) {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      if (segments.length > 0) {
+        return `/${segments[0]}`;
+      }
+    }
+
+    return '';
+  }
+
+  /**
    * Pre-compiles route pattern strings into WHATWG URLPattern instances.
    * @private
    */
@@ -98,14 +133,13 @@ export class BlewRouter {
     if (typeof URLPattern === 'undefined') return;
 
     this._compiledRoutes = this.routes.map((route) => {
-      // In browser/Node, compile pathname pattern
       const pattern = new URLPattern({ pathname: route.pattern });
       return { pattern, route };
     });
   }
 
   /**
-   * Sets up native Navigation API or fallback popstate / click listeners.
+   * Sets up native Navigation API and Shadow DOM-aware link click listeners.
    * @private
    */
   _setupNavigationListener() {
@@ -151,29 +185,59 @@ export class BlewRouter {
         };
         this._handleTransition(url.pathname, 'b-nav-backward');
       });
+    }
 
+    // Intercept anchor clicks across Shadow DOM via composedPath() to ensure
+    // subpath base prefixes (e.g. GitHub Pages /repo-name) and fallback routing work seamlessly
+    if (typeof document !== 'undefined') {
       document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) return;
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
 
-        const anchor = target.closest('a');
+        const path = typeof event.composedPath === 'function' ? event.composedPath() : [event.target];
+        let anchor = null;
+        for (const node of path) {
+          if (node instanceof Element && node.tagName === 'A') {
+            anchor = /** @type {HTMLAnchorElement} */ (node);
+            break;
+          }
+        }
+
         if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
 
         const href = anchor.getAttribute('href');
-        if (!href || href.startsWith('http') || href.startsWith('//') || href.startsWith('#')) return;
+        if (!href || href.startsWith('http') || href.startsWith('//') || href.startsWith('#') || href.startsWith('mailto:')) {
+          return;
+        }
 
-        event.preventDefault();
-        this.navigate(href);
+        // If base path is active or Navigation API is absent, handle via router.navigate()
+        if (this.base || !('navigation' in window && window.navigation)) {
+          event.preventDefault();
+          this.navigate(href);
+        }
       });
     }
   }
 
   /**
    * Resolves the route for the current browser location immediately on initialization.
+   * Restores any SPA redirect path saved by 404.html on static hosts like GitHub Pages.
    * @private
    */
   async _resolveCurrentLocation() {
     if (typeof window === 'undefined') return;
+
+    try {
+      const redirected = window.sessionStorage?.getItem('blew_redirect_path');
+      if (redirected) {
+        window.sessionStorage.removeItem('blew_redirect_path');
+        window.history.replaceState(null, '', redirected);
+      }
+    } catch {
+      // Ignore sessionStorage errors in restricted contexts
+    }
+
     const pathname = window.location.pathname;
     await this._handleTransition(pathname, 'b-nav-replace');
   }
@@ -235,9 +299,31 @@ export class BlewRouter {
   }
 
   /**
-   * Matches a pathname against the registered route patterns using standard WHATWG URLPattern.
+   * Strips configured base path prefix and normalizes pathname for route matching.
    *
-   * @param {string} pathname - Pathname to evaluate (e.g., '/notes/42').
+   * @param {string} pathname - Raw pathname (e.g., '/blew-framework/notes/42').
+   * @returns {string} Normalized route pathname (e.g., '/notes/42').
+   */
+  normalizePath(pathname) {
+    let normalized = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    if (this.base && normalized.startsWith(this.base)) {
+      const rest = normalized.slice(this.base.length);
+      if (!rest || rest.startsWith('/')) {
+        normalized = rest || '/';
+      }
+    }
+    // Strip trailing index.html if present on static hosts
+    if (normalized.endsWith('/index.html')) {
+      normalized = normalized.slice(0, -10) || '/';
+    }
+    return normalized.startsWith('/') ? normalized : `/${normalized}`;
+  }
+
+  /**
+   * Matches a pathname against the registered route patterns using standard WHATWG URLPattern.
+   * Automatically strips any active base path prefix before testing patterns.
+   *
+   * @param {string} pathname - Pathname to evaluate (e.g., '/notes/42' or '/repo/notes/42').
    * @returns {RouteMatchResult | null} Matched route definition and parameters, or null.
    * @example
    * ```javascript
@@ -252,10 +338,9 @@ export class BlewRouter {
       return null;
     }
 
-    const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    const normalizedPath = this.normalizePath(pathname);
 
     for (const { pattern, route } of this._compiledRoutes) {
-      // Check using URLPattern test or exec
       const result = pattern.exec({ pathname: normalizedPath });
       if (result) {
         /** @type {Record<string, string>} */
@@ -277,7 +362,7 @@ export class BlewRouter {
 
   /**
    * Programmatically navigates to a new URL using the native Navigation API pipeline
-   * or standard history fallback.
+   * or standard history fallback. Automatically prepends base path when configured.
    *
    * @param {string} url - Target URL or path to navigate to.
    * @param {object} [options={}] - Navigation options including state.
@@ -292,9 +377,22 @@ export class BlewRouter {
   async navigate(url, options = {}) {
     if (typeof window === 'undefined') return;
 
+    let targetUrl = url;
+    if (
+      this.base &&
+      !url.startsWith('http://') &&
+      !url.startsWith('https://') &&
+      !url.startsWith('//')
+    ) {
+      const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+      if (!cleanUrl.startsWith(`${this.base}/`) && cleanUrl !== this.base) {
+        targetUrl = cleanUrl === '/' ? `${this.base}/` : `${this.base}${cleanUrl}`;
+      }
+    }
+
     if ('navigation' in window && window.navigation && typeof window.navigation.navigate === 'function') {
       try {
-        window.navigation.navigate(url, options);
+        window.navigation.navigate(targetUrl, options);
         return;
       } catch (err) {
         console.warn('Navigation API navigate failed, falling back to history:', err);
@@ -302,12 +400,12 @@ export class BlewRouter {
     }
 
     // Fallback via History API
-    window.history.pushState(options.state ?? null, '', url);
+    window.history.pushState(options.state ?? null, '', targetUrl);
     this._fallbackEntry = {
       getState: () => options.state ?? null,
       key: String(Date.now())
     };
-    const parsed = new URL(url, window.location.origin);
+    const parsed = new URL(targetUrl, window.location.origin);
     await this._handleTransition(parsed.pathname, 'b-nav-forward');
   }
 

@@ -47,11 +47,11 @@ export function bootstrap() {
 
   Blew.setRouter(router);
 
-  // Register ESM Service Worker in supporting environments
+  // Register ESM Service Worker in supporting environments using relative path for subpath compatibility
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
-        .register('/sw.js', { type: 'module' })
+        .register('./sw.js', { type: 'module' })
         .then((reg) => {
           console.info('Blew Service Worker active with scope:', reg.scope);
         })

@@ -5,7 +5,7 @@
 
 /**
  * @fileoverview ESM Service Worker for Blew Progressive Web Applications.
- * Version: 0.1.0 ALPHA (BUILD 0001)
+ * Version: 0.1.0 ALPHA (BUILD 0002)
  *
  * Implements multi-tier caching (Precache, Cache-First, Stale-While-Revalidate)
  * and universal offline execution of wildcard API endpoints using BlewApiRouter.
@@ -18,8 +18,8 @@ import { BlewApiRouter } from './src/core/api-router.js';
 /**
  * Semantic version adhering to format: MAJOR.MINOR.PATCH BUILD-TYPE (BUILD 0000)
  */
-export const VERSION = '0.1.0 ALPHA (BUILD 0001)';
-export const CACHE_NAME = `blew-cache-0.1.0-alpha.build-0001`;
+export const VERSION = '0.1.0 ALPHA (BUILD 0002)';
+export const CACHE_NAME = `blew-cache-0.1.0-alpha.build-0002`;
 
 /**
  * Precache manifest covering core application shell and modules.
@@ -98,8 +98,8 @@ if (swGlobal && typeof swGlobal.addEventListener === 'function') {
     const request = event.request;
     const url = new URL(request.url);
 
-    // Handle /api/ requests with offline execution fallback
-    if (url.pathname.startsWith('/api/')) {
+    // Handle /api/ requests with offline execution fallback (supports root or subpath hosting)
+    if (url.pathname.includes('/api/')) {
       event.respondWith(
         fetch(request).catch(async () => {
           // Offline mode: execute local WinterCG endpoint
@@ -136,10 +136,10 @@ if (swGlobal && typeof swGlobal.addEventListener === 'function') {
             }
             return networkResponse;
           })
-          .catch(() => {
+          .catch(async () => {
             // If offline and request is HTML navigation, serve cached index.html
             if (request.mode === 'navigate') {
-              return caches.match('/index.html');
+              return (await caches.match('./index.html')) || (await caches.match('/index.html')) || cachedResponse;
             }
             return cachedResponse;
           });

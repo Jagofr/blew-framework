@@ -103,7 +103,8 @@ export class BlewApiRouter {
     }
 
     const url = new URL(request.url);
-    const pathname = url.pathname;
+    const apiIdx = url.pathname.indexOf('/api/');
+    const pathname = apiIdx > 0 ? url.pathname.slice(apiIdx) : url.pathname;
 
     // Search for a matching route
     for (const { pattern, route } of this._compiledRoutes) {

@@ -38,6 +38,21 @@ describe('E2E Integration: Headless Production Bundler (build.js)', () => {
     assert.match(html, /"@blew\/router"/);
     assert.match(html, /"@blew\/api"/);
 
+    // Verify GitHub Pages subpath compatibility assets
+    assert.ok(fs.existsSync(path.join(distDir, '.nojekyll')));
+    assert.ok(fs.existsSync(path.join(distDir, '404.html')));
+
+    // Verify relative paths in index.html for subpath hosting
+    assert.match(html, /href="\.\/manifest\.webmanifest"/);
+    assert.match(html, /href="\.\/theme\.[a-f0-9]+\.css"/);
+    assert.match(html, /src="\.\/app\.[a-f0-9]+\.js"/);
+    assert.match(html, /"@blew\/core": "\.\/chunks\/element\.[a-f0-9]+\.js"/);
+
+    // Verify manifest has relative scope/start_url
+    const manifest = JSON.parse(fs.readFileSync(path.join(distDir, 'manifest.webmanifest'), 'utf8'));
+    assert.equal(manifest.start_url, './');
+    assert.equal(manifest.scope, './');
+
     // Verify disabled features were pruned
     assert.equal(fs.existsSync(path.join(distDir, 'chunks', 'features', 'ai-summary')), false);
   });
