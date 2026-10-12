@@ -1,0 +1,42 @@
+{
+  "name": "blew-framework",
+  "version": "0.1.0-alpha.build-0001",
+  "blewVersion": "0.1.0 ALPHA (BUILD 0001)",
+  "description": "A breezy, standards-native, zero-build Progressive Web Application framework.",
+  "type": "module",
+  "main": "src/app.js",
+  "exports": {
+    ".": "./src/app.js",
+    "@blew/core": "./src/core/element.js",
+    "@blew/signals": "./src/core/signals.js",
+    "@blew/router": "./src/core/router.js",
+    "@blew/api": "./src/core/api-router.js",
+    "@blew/router-utils": "./src/core/router-utils.js",
+    "@blew/env": "./src/core/env.js",
+    "@blew/global": "./src/core/global.js"
+  },
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js tests/e2e/*.test.js",
+    "test:unit": "node --test tests/unit/*.test.js",
+    "test:e2e": "node --test tests/e2e/*.test.js",
+    "build": "node build.js",
+    "start": "npx serve . -l 3000"
+  },
+  "keywords": [
+    "pwa",
+    "web-components",
+    "signals",
+    "view-transitions",
+    "zero-build",
+    "esm",
+    "standards-native"
+  ],
+  "author": "Blew Framework Authors",
+  "license": "LicenseRef-ACPNCL-1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jagofr/blew-framework"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

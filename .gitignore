@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Production output
+dist/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.log
